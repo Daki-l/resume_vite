@@ -1,49 +1,48 @@
-## 🧾 Resume Generator
+# 🧾 Resume Generator
 
-在线简历生成器。无须 fork 仓库，即可在线预览、编辑和下载 PDF 简历。✨ [在线编辑](https://daki-l.github.io/resume_vite)
+在线简历生成器，无须 fork 仓库，即可在线预览、编辑和下载 PDF 简历。
 
-内置 3 套模板，支持**自定义主题颜色**、**自定义模块标题**、**国际化(中/英)** 等.
+✨ [在线编辑](https://daki-l.github.io/resume_vite)
 
-|默认模板| 简易模板| 简易模板2（适用于多页）|
-| -------------------------------- | --------------------------------------------------|----------------------- |
-| <img src="https://user-images.githubusercontent.com/15646325/147406773-d1583d83-b4ed-496a-9b7c-2fca8a5fc624.png" height="280" />|<img src="https://user-images.githubusercontent.com/15646325/147406862-19ac2b2a-6dcf-466f-a0dd-53fd1a6abccd.png" height="280" />| <img src="https://user-images.githubusercontent.com/15646325/147406903-19529fe9-9ef8-4877-8165-b2fad0e3b48a.png" height="280" />|
-|[Live Demo](https://daki-l.github.io/resume_vite?user=daki-l)  |[Live Demo](https://daki-l.github.io/resume_vite?user=daki-l&template=template2)|[Live Demo](https://daki-l.github.io/resume_vite?user=daki-l&template=template3) |
+## 📸 模板预览
 
-## 如何使用（How to use）
+| 默认模板 | 简易模板 | 简易模板2（多页） |
+| :---: | :---: | :---: |
+| <img src="https://user-images.githubusercontent.com/15646325/147406773-d1583d83-b4ed-496a-9b7c-2fca8a5fc624.png" height="280" /> | <img src="https://user-images.githubusercontent.com/15646325/147406862-19ac2b2a-6dcf-466f-a0dd-53fd1a6abccd.png" height="280" /> | <img src="https://user-images.githubusercontent.com/15646325/147406903-19529fe9-9ef8-4877-8165-b2fad0e3b48a.png" height="280" /> |
+| [预览](https://daki-l.github.io/resume_vite?template=template1&mode=edit) | [预览](https://daki-l.github.io/resume_vite?template=template2&mode=edit) | [预览](https://daki-l.github.io/resume_vite?template=template3&mode=edit) |
 
-**方式 1:**
+## ✨ 功能特性
 
-在线编辑 -> 导出配置 -> 存储“简历信息”在个人 github special 仓库下（例如: [daki-l/daki-l](https://github.com/daki-l/daki-l/blob/master/resume.json)）
+- 📝 **3 套简历模板**，可视化切换
+- 🎨 **自定义主题色** / 标签色
+- 🖱️ **拖拽排序** 模块内容
+- 📤 **导入/导出** JSON 配置
+- 📄 **下载 PDF**（浏览器打印）
+- ⚡ **Vite 构建**，秒级启动
 
-**方式 2:**
+## 🛠️ 技术栈
 
-直接创建一个 `resume.json` 文件在自己的 special 仓库下 (内容参考: [daki-l/daki-l](https://github.com/daki-l/daki-l/blob/master/resume.json)).
+| 技术 | 说明 |
+| --- | --- |
+| React 18 | UI 框架 |
+| Ant Design 5 | 组件库 |
+| Vite 5 | 构建工具 |
+| TypeScript | 类型安全 |
+| Less | 样式预处理 |
 
-**最后**
-
-访问 https://daki-l.github.io/resume_vite?user={user}&branch={branch}
-
-参数说明:
-
-| 参数   | 描述          | 默认值       |
-| ------ | ------------- | ------------ |
-| user   | github 用户名 | 必选         |
-| template | 模板        | 默认: template1 |
-| branch | 分支名        | 默认: master |
-| mode | 模式        | 备注: 默认为‘只读’模式，设置为: `mode=edit` 即可进入编辑模式 |
-| lang | 语言        | 默认: zh-CN |
-
-## 本地开发（Local develop）
+## 🚀 本地开发
 
 ```bash
-# pnpm required, to see: https://pnpm.io/installation
-# Install dependencies
-pnpm install
-# Then, start
-npm start
-```
+# 安装依赖
+npm install
 
+# 启动开发服务器
+npm run dev
+
+# 生产构建
+npm run build
+```
 ## ✨ Recommendation
 
 - [resumemaker](https://www.resumemaker.online/es.php)
-- [Geek Resume - Pure Markdown, an online resume editor for developer.](https://www.jijian.press/)
+
