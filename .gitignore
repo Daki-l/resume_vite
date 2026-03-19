@@ -3,29 +3,23 @@ logs
 *.log
 npm-debug.log*
 
-# Coverage directory used by tools like istanbul
+# Coverage directory
 coverage
 
 # Dependency directories
 node_modules
 
-# Optional npm cache directory
+# Optional npm cache
 .npm
 
 .DS_Store
 
-# vscode editor
+# Editor
 .vscode
-
-# webstorm editor
 .idea
 
-# gatsby files
-.cache/
-public
-
-# package lock file
-package-lock.json
+# Build output
+dist
 
 # temp
 **temp**
