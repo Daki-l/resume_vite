@@ -3,17 +3,17 @@ name: github pages
 on:
   push:
     branches:
-      - master  # 确保你的主分支叫 master 而不是 main
-  workflow_dispatch: # 允许你手动点击运行
+      - master
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # 使用最新的 ubuntu
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # 升级到 v4
-      - uses: actions/setup-node@v4 # 升级到 v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20 # 建议使用 Node 20 (LTS)
+          node-version: 20
 
       - run: npm install
       - run: npm run build
@@ -22,7 +22,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # 【重要检测点】你的构建产物真的在 public 文件夹吗？
-          # 如果是 Vite/Vue，通常改为 ./dist
-          # 如果是 Hexo/Hugo，通常是 ./public
           publish_dir: ./dist
