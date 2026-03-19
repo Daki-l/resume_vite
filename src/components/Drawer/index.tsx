@@ -8,20 +8,15 @@ import {
   Popover,
   Input,
 } from 'antd';
-import { DeleteFilled, InfoCircleFilled } from '@ant-design/icons';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import _ from 'lodash-es';
-import arrayMove from 'array-move';
+import { DeleteFilled, InfoCircleFilled, MenuOutlined } from '@ant-design/icons';
 import { FormCreator } from '../FormCreator';
 import { getDefaultTitleNameMap } from '@/data/constant';
-import { FormattedMessage, useIntl } from 'react-intl';
 import { MODULES, CONTENT_OF_MODULE } from '@/helpers/contant';
 import type { ResumeConfig, ThemeConfig } from '../types';
 import { ConfigTheme } from './ConfigTheme';
 import { Templates } from './Templates';
-import './index.less';
 import useThrottle from '@/hooks/useThrottle';
+import './index.less';
 
 const { Panel } = Collapse;
 
@@ -32,110 +27,78 @@ type Props = {
   onThemeChange: (v: Partial<ThemeConfig>) => void;
   template: string;
   onTemplateChange: (v: string) => void;
-
   style?: object;
 };
 
-const type = 'DragableBodyRow';
-
-const DragableRow = ({ index, moveRow, ...restProps }) => {
-  const ref = useRef();
-  const [{ isOver, dropClassName }, drop] = useDrop({
-    accept: type,
-    collect: monitor => {
-      // @ts-ignore
-      const { index: dragIndex } = monitor.getItem() || {};
-      if (dragIndex === index) {
-        return {};
-      }
-      return {
-        isOver: monitor.isOver(),
-        dropClassName:
-          dragIndex < index ? ' drop-over-downward' : ' drop-over-upward',
-      };
-    },
-    drop: item => {
-      // @ts-ignore
-      moveRow(item.index, index);
-    },
-  });
-  const [, drag] = useDrag({
-    type,
-    item: { index },
-    collect: monitor => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-  drop(drag(ref));
+// ─── 原生 HTML5 拖拽排序行 ───────────────────────────────────────────────────
+const DraggableRow: React.FC<{
+  index: number;
+  onDragStart: (i: number) => void;
+  onDrop: (i: number) => void;
+  children: React.ReactNode;
+}> = ({ index, onDragStart, onDrop, children }) => {
+  const [isOver, setIsOver] = useState(false);
 
   return (
     <div
-      ref={ref}
-      className={`${isOver ? dropClassName : ''}`}
-      style={{ cursor: 'move' }}
-      {...restProps}
-    />
+      draggable
+      onDragStart={() => onDragStart(index)}
+      onDragOver={e => { e.preventDefault(); setIsOver(true); }}
+      onDragLeave={() => setIsOver(false)}
+      onDrop={() => { setIsOver(false); onDrop(index); }}
+      style={{
+        cursor: 'move',
+        borderTop: isOver ? '2px solid #1890ff' : '2px solid transparent',
+        transition: 'border-color 0.15s',
+      }}
+    >
+      {children}
+    </div>
   );
 };
 
-/**
- * @description 简历配置区
- */
 export const Drawer: React.FC<Props> = props => {
-  const intl = useIntl();
-
   const [visible, setVisible] = useState(false);
-  const [childrenDrawer, setChildrenDrawer] = useState(null);
-  const [currentContent, updateCurrentContent] = useState(null);
+  const [childrenDrawer, setChildrenDrawer] = useState<string | null>(null);
+  const [currentContent, updateCurrentContent] = useState<any>(null);
+  const [panelType, setPanelType] = useState('template');
+  const dragIndexRef = useRef<number>(-1);
 
-  /**
-   * 1. 更新currentContent State
-   * 2. 调用 props.onValueChange 更新模板
-   */
   const updateContent = useThrottle(
-    v => {
-      const newConfig = _.merge({}, currentContent, v);
+    (v: any) => {
+      const newConfig = { ...currentContent, ...v };
       updateCurrentContent(newConfig);
-      props.onValueChange({
-        [childrenDrawer]: newConfig,
-      });
+      props.onValueChange({ [childrenDrawer!]: newConfig });
     },
     [currentContent],
     800
   );
 
-  const [type, setType] = useState('template');
-
-  const swapItems = (moduleKey: string, oldIdx: number, newIdx: number) => {
-    const newValues = _.clone(_.get(props.value, moduleKey, []));
-    props.onValueChange({
-      [moduleKey]: arrayMove(newValues, newIdx, oldIdx),
-    });
+  const swapItems = (moduleKey: string, fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx || !props.value) return;
+    const arr = [...((props.value as any)[moduleKey] || [])];
+    const [item] = arr.splice(fromIdx, 1);
+    arr.splice(toIdx, 0, item);
+    props.onValueChange({ [moduleKey]: arr });
   };
 
   const deleteItem = (moduleKey: string, idx: number) => {
-    const newValues = _.get(props.value, moduleKey, []);
-    props.onValueChange({
-      [moduleKey]: newValues.slice(0, idx).concat(newValues.slice(idx + 1)),
-    });
+    if (!props.value) return;
+    const arr: any[] = (props.value as any)[moduleKey] || [];
+    props.onValueChange({ [moduleKey]: arr.filter((_, i) => i !== idx) });
   };
 
   const modules = useMemo(() => {
-    const titleNameMap = props.value?.titleNameMap;
-    return MODULES({ intl, titleNameMap });
-  }, [intl, props.value?.titleNameMap]);
+    return MODULES({ titleNameMap: props.value?.titleNameMap });
+  }, [props.value?.titleNameMap]);
 
-  const contentOfModule = useMemo(() => {
-    return CONTENT_OF_MODULE({ intl });
-  }, [intl]);
+  const contentOfModule = useMemo(() => CONTENT_OF_MODULE(), []);
 
-  const DEFAULT_TITLE_MAP = getDefaultTitleNameMap({ intl });
-  const isList = _.endsWith(childrenDrawer, 'List');
+  const DEFAULT_TITLE_MAP = getDefaultTitleNameMap();
+  const isList = childrenDrawer?.endsWith('List') ?? false;
 
-  // #region 1 render: moduleContent
-
-  // #region 1.1 render: ModuleList
-  const renderModuleList = ({ icon, key, name }, idx, values) => {
+  // ── 列表型模块（带拖拽排序）
+  const renderModuleList = ({ icon, key, name }: any, idx: number, values: any[]) => {
     const header = (
       <>
         <span className="item-icon">{icon}</span>
@@ -143,67 +106,62 @@ export const Drawer: React.FC<Props> = props => {
           {DEFAULT_TITLE_MAP[key] ? (
             <Input
               placeholder={DEFAULT_TITLE_MAP[key]}
-              bordered={false}
+              variant="borderless"
               defaultValue={name}
               onChange={e => {
                 props.onValueChange({
-                  titleNameMap: {
-                    ...(props.value.titleNameMap || {}),
-                    [key]: e.target.value,
-                  },
+                  titleNameMap: { ...(props.value.titleNameMap || {}), [key]: e.target.value },
                 });
               }}
               style={{ padding: 0 }}
             />
-          ) : (
-            name
-          )}
+          ) : name}
         </span>
       </>
     );
 
-    const list = _.map(values, (value, idx: number) => (
-      <DragableRow
-        key={`${idx}`}
-        index={idx}
-        moveRow={(oldIdx, newIdx) => swapItems(key, oldIdx, newIdx)}
+    const list = values.map((value, i) => (
+      <DraggableRow
+        key={i}
+        index={i}
+        onDragStart={fi => { dragIndexRef.current = fi; }}
+        onDrop={ti => swapItems(key, dragIndexRef.current, ti)}
       >
-        <div
-          onClick={() => {
-            setChildrenDrawer(key);
-            updateCurrentContent({
-              ...value,
-              dataIndex: idx,
-            });
-          }}
-        >
-          {`${idx + 1}. ${Object.values(value || {}).join(' - ')}`}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+          <MenuOutlined style={{ color: '#bbb', fontSize: 12, flexShrink: 0 }} />
+          <div
+            style={{ flex: 1, cursor: 'pointer' }}
+            onClick={() => {
+              setChildrenDrawer(key);
+              updateCurrentContent({ ...value, dataIndex: i });
+            }}
+          >
+            {`${i + 1}. ${Object.values(value || {}).join(' - ')}`}
+          </div>
+          <DeleteFilled
+            style={{ color: '#ff4d4f', cursor: 'pointer' }}
+            onClick={() => {
+              Modal.confirm({
+                content: '确认删除？',
+                onOk: () => deleteItem(key, i),
+              });
+            }}
+          />
         </div>
-        <DeleteFilled
-          onClick={() => {
-            Modal.confirm({
-              content: intl.formatMessage({ id: '确认删除' }),
-              onOk: () => deleteItem(key, idx),
-            });
-          }}
-        />
-      </DragableRow>
+      </DraggableRow>
     ));
 
     return (
-      <div className="module-item" key={`${idx}`}>
+      <div className="module-item" key={idx}>
         <Collapse defaultActiveKey={[]} ghost>
-          <Panel header={header} key={`${idx}`}>
+          <Panel header={header} key={idx}>
             <div className="list-value-item">
               {list}
               <div
                 className="btn-append"
-                onClick={() => {
-                  setChildrenDrawer(key);
-                  updateCurrentContent(null);
-                }}
+                onClick={() => { setChildrenDrawer(key); updateCurrentContent(null); }}
               >
-                <FormattedMessage id="继续添加" />
+                继续添加
               </div>
             </div>
           </Panel>
@@ -211,77 +169,58 @@ export const Drawer: React.FC<Props> = props => {
       </div>
     );
   };
-  // #endregion
 
-  // #region 1.2 render: ModuleListItem when !_.endsWith(module.key,'List')
-  const renderModuleListItem = ({ icon, key, name }) => (
+  // ── 单项模块（无列表）
+  const renderModuleListItem = ({ icon, key, name }: any) => (
     <div className="module-item" key={key}>
       <Collapse
         defaultActiveKey={[]}
         ghost
-        expandIcon={() => (
-          <span style={{ display: 'inline-block', width: '12px' }} />
-        )}
+        expandIcon={() => <span style={{ display: 'inline-block', width: '12px' }} />}
       >
         <Panel
           header={
-            <span
-              onClick={() => {
-                updateCurrentContent(_.get(props.value, key));
-                setChildrenDrawer(key);
-              }}
-            >
+            <span onClick={() => { updateCurrentContent(props.value ? (props.value as any)[key] : {}); setChildrenDrawer(key); }}>
               <span className="item-icon">{icon}</span>
               <span className="item-name">{name}</span>
             </span>
           }
           className="no-content-panel"
-          key="no-content-panel__renderModuleListItem"
+          key="no-content-panel"
         />
       </Collapse>
     </div>
   );
-  // #endregion
 
   const moduleContent = (
-    <DndProvider backend={HTML5Backend}>
-      <div className="module-list">
-        {modules.map((module, idx) => {
-          if (!_.endsWith(module.key, 'List')) {
-            return renderModuleListItem(module);
-          }
-          const values = _.get(props.value, module.key, []);
-          return renderModuleList(module, idx, values);
-        })}
-      </div>
+    <div className="module-list">
+      {modules.map((module, idx) => {
+        if (!module.key.endsWith('List')) return renderModuleListItem(module);
+        if (!props.value) return null;
+        const values = ((props.value as any)[module.key] || []) as any[];
+        return renderModuleList(module, idx, values);
+      })}
+
       <AntdDrawer
         title={modules.find(m => m.key === childrenDrawer)?.name}
         width={450}
         onClose={() => setChildrenDrawer(null)}
-        visible={!!childrenDrawer}
+        open={!!childrenDrawer}
       >
         <FormCreator
-          config={contentOfModule[childrenDrawer]}
+          config={(contentOfModule as any)[childrenDrawer!]}
           value={currentContent}
           isList={isList}
           onChange={v => {
             if (isList) {
-              const newValue = _.get(props.value, childrenDrawer, []);
+              const arr: any[] = [...((props.value as any)[childrenDrawer!] || [])];
               if (currentContent) {
-                newValue[currentContent.dataIndex] = _.merge(
-                  {},
-                  currentContent,
-                  v
-                );
+                arr[currentContent.dataIndex] = { ...currentContent, ...v };
               } else {
-                newValue.push(v);
+                arr.push(v);
               }
-              props.onValueChange({
-                [childrenDrawer]: newValue,
-              });
-              // 关闭抽屉
+              props.onValueChange({ [childrenDrawer!]: arr });
               setChildrenDrawer(null);
-              // 清空当前选中内容
               updateCurrentContent(null);
             } else {
               updateContent(v);
@@ -289,56 +228,33 @@ export const Drawer: React.FC<Props> = props => {
           }}
         />
       </AntdDrawer>
-    </DndProvider>
+    </div>
   );
-
-  // #endregion
 
   return (
     <>
-      <Button
-        type="primary"
-        onClick={() => setVisible(true)}
-        style={props.style}
-      >
-        <FormattedMessage id="进行配置" />
-        <Popover
-          content={
-            <FormattedMessage id="移动端模式下，只支持预览，不支持配置" />
-          }
-        >
+      <Button type="primary" onClick={() => setVisible(true)} style={props.style}>
+        进行配置
+        <Popover content="点击配置简历模块">
           <InfoCircleFilled style={{ marginLeft: '4px' }} />
         </Popover>
       </Button>
       <AntdDrawer
         title={
-          <Radio.Group value={type} onChange={e => setType(e.target.value)}>
-            <Radio.Button value="template">
-              <FormattedMessage id="选择模板" />
-            </Radio.Button>
-            <Radio.Button value="module">
-              <FormattedMessage id="配置简历" />
-            </Radio.Button>
+          <Radio.Group value={panelType} onChange={e => setPanelType(e.target.value)}>
+            <Radio.Button value="template">选择模板</Radio.Button>
+            <Radio.Button value="module">配置简历</Radio.Button>
           </Radio.Group>
         }
         width={480}
         closable={false}
         onClose={() => setVisible(false)}
-        visible={visible}
+        open={visible}
       >
-        {type === 'module' ? (
-          moduleContent
-        ) : (
-          // type === 'theme'
+        {panelType === 'module' ? moduleContent : (
           <>
-            <ConfigTheme
-              {...props.theme}
-              onChange={v => props.onThemeChange(v)}
-            />
-            <Templates
-              template={props.template}
-              onChange={v => props.onTemplateChange(v)}
-            />
+            <ConfigTheme {...props.theme} onChange={v => props.onThemeChange(v)} />
+            <Templates template={props.template} onChange={v => props.onTemplateChange(v)} />
           </>
         )}
       </AntdDrawer>

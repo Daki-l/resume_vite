@@ -1,16 +1,19 @@
-// copy text to clipboard
-
-import { message } from 'antd';
-
-// ref: https://stackoverflow.com/a/46118025
-export function copyToClipboard(text: string) {
-  var dummy = document.createElement('input');
-  document.body.appendChild(dummy);
-  dummy.setAttribute('value', text);
-  dummy.select();
-  const result = document.execCommand('copy');
-  document.body.removeChild(dummy);
-  if (result) {
-    message.success('复制成功');
+/** 复制文本到剪贴板 */
+export const copyToClipboard = (text: string) => {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
   }
+};
+
+function fallbackCopy(text: string) {
+  const el = document.createElement('textarea');
+  el.value = text;
+  el.style.position = 'fixed';
+  el.style.opacity = '0';
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
 }

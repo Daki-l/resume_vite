@@ -1,48 +1,48 @@
-import { useIntl } from 'react-intl';
+/**
+ * 替代 store-to-local.ts：移除 lodash / react-intl / fetch-resume
+ * - localStorage 读写简历配置
+ * - 本地数据源（无 GitHub 拉取）
+ */
 import { message } from 'antd';
 import type { ResumeConfig } from '@/components/types';
 import { customAssign } from '@/helpers/customAssign';
-import _ from 'lodash-es';
 import { RESUME_INFO } from '@/data/resume';
-import { fetchResume } from './fetch-resume';
-import { intl } from '@/i18n';
 
-export const LOCAL_KEY = user => `${user ?? ''}resume-config`;
+export const LOCAL_KEY = (user?: string) => `${user ?? ''}resume-config`;
+
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 export async function getConfig(
-  lang: string,
-  branch: string,
+  _lang: string,
+  _branch: string,
   user: string
 ): Promise<ResumeConfig> {
-  // 先从本地缓存获取，否则从远程拉取
+  // 先从本地 localStorage 读取
   if (typeof localStorage !== 'undefined') {
     const config = localStorage.getItem(LOCAL_KEY(user));
-    let result;
     try {
-      result = JSON.parse(config || undefined);
-    } catch (e) {}
-    if (result) {
-      return Promise.resolve(result);
-    }
+      const result = JSON.parse(config || '');
+      if (result) return Promise.resolve(result);
+    } catch (_) {}
   }
-
-  return fetchResume(lang, branch, user).catch(() => {
-    message.warn(intl.formatMessage({ id: '从模板中获取' }), 1);
-    return _.omit(
-      customAssign({}, RESUME_INFO, _.get(RESUME_INFO, ['locales', lang])),
-      ['locales']
-    );
-  });
+  // 没有则返回内置初始数据
+  return Promise.resolve(
+    customAssign({}, RESUME_INFO) as ResumeConfig
+  );
 }
 
-export const saveToLocalStorage = _.throttle(
-  (user: string, config: ResumeConfig) => {
-    const intl = useIntl();
-
+export const saveToLocalStorage = (user: string, config: ResumeConfig) => {
+  // 节流：5s 内只保存一次
+  if (saveTimer) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(LOCAL_KEY(user), JSON.stringify(config));
-      message.success(intl.formatMessage({ id: '已缓存在本地' }), 0.65);
+      message.success('已缓存在本地', 0.65);
     }
-  },
-  5000
-);
+  }, 5000);
+  // 立即写，5s 后再允许下次
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(LOCAL_KEY(user), JSON.stringify(config));
+  }
+};

@@ -1,25 +1,15 @@
-import fetch from 'cross-fetch';
-import _ from 'lodash-es';
+/**
+ * 替代 fetch-resume.ts：不再从 GitHub 拉取，仅本地使用
+ * 保留此文件供 getConfig 兼容性调用
+ */
 import type { ResumeConfig } from '@/components/types';
+import { RESUME_INFO } from '@/data/resume';
 import { customAssign } from './customAssign';
 
-export function fetchResume(
-  lang: string,
-  branch: string,
-  user: string
+export async function fetchResume(
+  _lang: string,
+  _branch: string,
+  _user: string
 ): Promise<ResumeConfig> {
-  return fetch(
-    `https://raw.githubusercontent.com/${user}/${user}/${branch}/resume.json`
-  )
-    .then(data => {
-      if (data.status !== 200) {
-        return Promise.reject(new Error());
-      }
-      return data.json();
-    })
-    .then(data => {
-      return _.omit(customAssign({}, data, _.get(data, ['locales', lang])), [
-        'locales',
-      ]);
-    });
+  return Promise.resolve(customAssign({}, RESUME_INFO) as ResumeConfig);
 }
