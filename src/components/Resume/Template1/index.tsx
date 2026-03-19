@@ -131,8 +131,9 @@ export const Template1: React.FC<Props> = ({ value, theme }) => {
         {workExpList.length > 0 && wrapper({ id: 'work-experience', title: titleNameMap?.workExpList, color: theme.color })(
           <div className="section section-work-exp">
             {workExpList.map((work, i) => {
-              const [start = null, end = null] = typeof work.work_time === 'string'
-                ? work.work_time.split(',') : work.work_time;
+              const wt: any = work.work_time;
+              const [start = null, end = null] = typeof wt === 'string'
+                ? wt.split(',') : (wt || []);
               return work ? (
                 <div className="section-item" key={i}>
                   <div className="section-info">
