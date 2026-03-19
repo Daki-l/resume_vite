@@ -3,22 +3,22 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  base: '/resume_vite/',
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  css: {
-    preprocessorOptions: {
-      less: {
-        javascriptEnabled: true,
-      },
-    },
-  },
-  server: {
-    port: 3000,
-    open: true,
-  },
+	base: '/',
+	plugins: [react()],
+	resolve: {
+		alias: {
+			'@': path.resolve(__dirname, './src'),
+		},
+	},
+	css: {
+		preprocessorOptions: {
+			less: {
+				javascriptEnabled: true,
+			},
+		},
+	},
+	server: {
+		port: 3000,
+		open: true,
+	},
 });
