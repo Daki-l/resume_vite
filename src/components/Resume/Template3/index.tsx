@@ -97,30 +97,19 @@ export const Template3: React.FC<Props> = ({ value, theme }) => {
               return skills ? (
                 <div className="skill-item" key={i}>
                   <span><CheckCircleFilled style={{ color: '#ffc107', marginRight: '8px' }} />{skills}</span>
-                  {skill.skill_level && <Rate allowHalf disabled value={skill.skill_level / 20} className="skill-rate" />}
+                  {/* {skill.skill_level && <Rate allowHalf disabled value={skill.skill_level / 20} className="skill-rate" />} */}
                 </div>
               ) : null;
             })}
           </CardWrapper>
         )}
 
-        {/* 更多信息 */}
-        {awardList.length > 0 && (
-          <CardWrapper title={titleNameMap.awardList} className="section section-award" color={theme.color}>
-            {awardList.map((award, i) => (
-              <div key={i}>
-                <TrophyFilled style={{ color: '#ffc107', marginRight: '8px' }} />
-                <b className="info-name">{award.award_info}</b>
-                {award.award_time && <span className="sub-info award-time">({award.award_time})</span>}
-              </div>
-            ))}
-          </CardWrapper>
-        )}
+        
       </div>
 
       <div className="main-info">
         {/* 工作经历 */}
-        {workExpList.length > 0 && wrapper({ title: titleNameMap?.workExpList, color: theme.color })(
+        {workExpList.length > 0 && wrapper({ title: titleNameMap?.workExpList,  color: theme.color })(
           <div className="section section-work-exp">
             {workExpList.map((work, i) => {
               const wt: any = work.work_time;
@@ -152,6 +141,18 @@ export const Template3: React.FC<Props> = ({ value, theme }) => {
               </div>
             ) : null)}
           </div>
+        )}
+        {/* 更多信息 */}
+        {awardList.length > 0 && (
+          <CardWrapper title={titleNameMap.awardList} className="more-info" color={theme.color}>
+            {awardList.map((award, i) => (
+              <div key={i}>
+                <TrophyFilled style={{ color: '#ffc107', marginRight: '8px' }} />
+                <b className="info-name">{award.award_info}</b>
+                {award.award_time && <span className="sub-info award-time">({award.award_time})</span>}
+              </div>
+            ))}
+          </CardWrapper>
         )}
       </div>
     </div>

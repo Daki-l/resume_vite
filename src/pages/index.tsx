@@ -7,7 +7,7 @@ const IndexPage: React.FC = () => (
   <>
     <Header />
     <Content />
-    <Footer />
+    {/* <Footer /> */}
   </>
 );
 

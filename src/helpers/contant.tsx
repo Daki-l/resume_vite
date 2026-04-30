@@ -16,13 +16,13 @@ export const MODULES = ({ titleNameMap }: { intl?: any; titleNameMap?: ResumeCon
   const defaults: Record<string, string> = {
     avatar: '头像设置',
     profile: '个人信息',
+    workExpList: '工作经历',
+    projectList: '项目经历',
     educationList: '教育背景',
     aboutme: '自我介绍',
     awardList: '更多信息',
     workList: '个人作品',
     skillList: '专业技能',
-    workExpList: '工作经历',
-    projectList: '项目经历',
   };
 
   const icons: Record<string, React.ReactNode> = {

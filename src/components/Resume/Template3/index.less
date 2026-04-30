@@ -19,6 +19,19 @@
     width: 100%;
     box-shadow: none;
   }
+
+  .ant-ribbon,
+  .ant-ribbon .ant-ribbon-text,
+  .main-info .section-header h1,
+  .main-info .section-header h1:before {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .ant-ribbon,
+  .main-info .section-header h1 {
+    box-shadow: none;
+  }
 }
 
 // 内容
@@ -32,7 +45,7 @@
   }
 
   .main-info {
-    padding: 24px 24px 32px 32px;
+    padding: 0px 24px 24px 32px;
     background: #fff;
   }
 
@@ -102,8 +115,8 @@
     margin-bottom: 16px;
 
     .profile-list {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       margin-left: 4px;
 
       > div {
@@ -248,6 +261,13 @@
     .work-description,
     .project-content {
       white-space: pre-wrap;
+    }
+  }
+  .main-info .more-info {
+    padding-top: 40px;
+    border: none;
+    .ant-card-body {
+      padding: 12px 0;
     }
   }
 }
