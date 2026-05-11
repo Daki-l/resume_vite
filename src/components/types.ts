@@ -41,6 +41,9 @@ export type ResumeConfig = {
 		aboutme?: string;
 	};
 
+	/** 配置面板模块顺序 */
+	moduleOrder?: string[];
+
 	/** 教育背景 */
 	educationList?: Array<{
 		edu_time: [string | undefined, string | number];

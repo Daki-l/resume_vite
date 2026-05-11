@@ -12,19 +12,55 @@ import {
 } from '@ant-design/icons';
 import type { ResumeConfig } from '@/components/types';
 
-export const MODULES = ({ titleNameMap }: { intl?: any; titleNameMap?: ResumeConfig['titleNameMap'] }) => {
-  const defaults: Record<string, string> = {
-    avatar: '头像设置',
-    profile: '个人信息',
-    workExpList: '工作经历',
-    projectList: '项目经历',
-    educationList: '教育背景',
-    aboutme: '自我介绍',
-    awardList: '更多信息',
-    workList: '个人作品',
-    skillList: '专业技能',
-  };
+const DEFAULT_MODULES: Record<string, string> = {
+  avatar: '头像设置',
+  profile: '个人信息',
+  workExpList: '工作经历',
+  projectList: '项目经历',
+  educationList: '教育背景',
+  aboutme: '自我介绍',
+  awardList: '更多信息',
+  workList: '个人作品',
+  skillList: '个人技能',
+};
 
+export const getModuleKeys = (moduleOrder?: string[]) => {
+  const defaults = Object.keys(DEFAULT_MODULES);
+  const customOrder = Array.isArray(moduleOrder) ? moduleOrder : [];
+  const orderedKeys = Array.from(
+    new Set(customOrder.filter(key => key in DEFAULT_MODULES))
+  );
+  const restKeys = defaults.filter(key => !orderedKeys.includes(key));
+  return [...orderedKeys, ...restKeys];
+};
+
+export const getResumeModuleKeys = (moduleOrder?: string[]) => {
+  const keys: string[] = [];
+  let hasProfile = false;
+
+  getModuleKeys(moduleOrder).forEach(key => {
+    if (key === 'avatar' || key === 'profile') {
+      if (!hasProfile) {
+        keys.push('profile');
+        hasProfile = true;
+      }
+      return;
+    }
+
+    keys.push(key);
+  });
+
+  return keys;
+};
+
+export const MODULES = ({
+  titleNameMap,
+  moduleOrder,
+}: {
+  intl?: any;
+  titleNameMap?: ResumeConfig['titleNameMap'];
+  moduleOrder?: ResumeConfig['moduleOrder'];
+}) => {
   const icons: Record<string, React.ReactNode> = {
     avatar: <ContactsTwoTone />,
     profile: <ProfileTwoTone />,
@@ -37,10 +73,10 @@ export const MODULES = ({ titleNameMap }: { intl?: any; titleNameMap?: ResumeCon
     projectList: <ProjectTwoTone />,
   };
 
-  return Object.keys(defaults).map(key => ({
+  return getModuleKeys(moduleOrder).map(key => ({
     key,
     icon: icons[key],
-    name: (titleNameMap && titleNameMap[key]) || defaults[key],
+    name: (titleNameMap && titleNameMap[key]) || DEFAULT_MODULES[key],
   }));
 };
 

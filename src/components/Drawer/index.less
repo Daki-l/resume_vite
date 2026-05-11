@@ -1,4 +1,36 @@
 .module-list {
+  .module-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+  }
+
+  .module-sort-list {
+    .module-sort-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 4px;
+      color: rgba(0, 0, 0, 0.75);
+
+      .drag-handle {
+        color: rgba(0, 0, 0, 0.35);
+        cursor: move;
+      }
+
+      .item-icon {
+        margin-right: 0;
+      }
+
+      .item-name {
+        font-family: roboto-medium;
+      }
+    }
+  }
+
   .module-item {
     > div:first-child {
       &:hover {

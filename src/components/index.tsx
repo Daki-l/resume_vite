@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { Button, Affix, Upload, Spin, message, Modal } from 'antd';
-import type { UploadFile } from 'antd';
+import { Button, Affix, Upload, Spin, message } from 'antd';
+import { CloseOutlined } from '@ant-design/icons';
 import { useModeSwitcher } from '@/hooks/useModeSwitcher';
 import { getDefaultTitleNameMap } from '@/data/constant';
 import { getSearchObj } from '@/helpers/location';
@@ -8,10 +8,21 @@ import { customAssign } from '@/helpers/customAssign';
 import { copyToClipboard } from '@/helpers/copy-to-board';
 import { exportDataToLocal } from '@/helpers/export-to-local';
 import { getConfig, saveToLocalStorage } from '@/helpers/store-to-local';
+import { normalizeCssColor } from '@/helpers/sanitize';
 import { Drawer } from './Drawer';
 import { Resume } from './Resume';
 import type { ResumeConfig, ThemeConfig } from './types';
 import './index.less';
+
+const DEFAULT_THEME: ThemeConfig = { color: '#2f5785', tagColor: '#8bc34a' };
+
+const normalizeConfig = (v: Partial<ResumeConfig>) => ({
+	...v,
+	titleNameMap: {
+		...getDefaultTitleNameMap(),
+		...(v.titleNameMap && typeof v.titleNameMap === 'object' ? v.titleNameMap : {}),
+	},
+} as ResumeConfig);
 
 export const Page: React.FC = () => {
 	const query = getSearchObj();
@@ -20,7 +31,8 @@ export const Page: React.FC = () => {
 	const [, mode, changeMode] = useModeSwitcher({});
 	const [config, setConfig] = useState<ResumeConfig | undefined>();
 	const [loading, setLoading] = useState(true);
-	const [theme, setTheme] = useState<ThemeConfig>({ color: '#2f5785', tagColor: '#8bc34a' });
+	const [showEditTip, setShowEditTip] = useState(true);
+	const [theme, setTheme] = useState<ThemeConfig>(DEFAULT_THEME);
 
 	// 确保 URL 有 template 参数
 	useEffect(() => {
@@ -32,7 +44,7 @@ export const Page: React.FC = () => {
 	}, []);
 
 	const changeConfig = (v: Partial<ResumeConfig>) => {
-		setConfig(Object.assign({}, { titleNameMap: getDefaultTitleNameMap() }, v) as ResumeConfig);
+		setConfig(normalizeConfig(v));
 	};
 
 	// 加载简历数据（本地缓存 → 内置默认值）
@@ -45,12 +57,16 @@ export const Page: React.FC = () => {
 
 	const onConfigChange = useCallback((v: Partial<ResumeConfig>) => {
 		const newC = Object.assign({}, config, v) as ResumeConfig;
-		changeConfig(newC);
-		saveToLocalStorage(user, newC);
+		const normalizedConfig = normalizeConfig(newC);
+		setConfig(normalizedConfig);
+		saveToLocalStorage(user, normalizedConfig);
 	}, [config, user]);
 
 	const onThemeChange = useCallback((v: Partial<ThemeConfig>) => {
-		setTheme(prev => ({ ...prev, ...v }));
+		setTheme(prev => ({
+			color: normalizeCssColor(v.color, prev.color),
+			tagColor: normalizeCssColor(v.tagColor, prev.tagColor),
+		}));
 	}, []);
 
 	const updateTemplate = (value: string) => {
@@ -95,9 +111,17 @@ export const Page: React.FC = () => {
 	return (
 		<React.Fragment>
 			<Spin spinning={loading}>
-				{mode === 'edit' && (
-					<div style={{ background: '#fffbe6', padding: '8px 16px', borderBottom: '1px solid #ffe58f', fontSize: 13 }}>
-						💡 编辑后请点击「保存简历」导出 JSON，下次导入继续使用。
+				{mode === 'edit' && showEditTip && (
+					<div className="resume-alert">
+						<span>💡 编辑后请点击「保存简历」导出 JSON，下次导入继续使用。</span>
+						<Button
+							type="text"
+							size="small"
+							className="resume-alert-close"
+							icon={<CloseOutlined />}
+							aria-label="关闭提示"
+							onClick={() => setShowEditTip(false)}
+						/>
 					</div>
 				)}
 				<div className="page">
@@ -107,7 +131,7 @@ export const Page: React.FC = () => {
 					{mode === 'edit' && config && (
 						<React.Fragment>
 							<Affix offsetTop={0}>
-								<Button.Group className="btn-group">
+								<div className="btn-group">
 									<Drawer
 										value={config!}
 										onValueChange={onConfigChange}
@@ -122,7 +146,7 @@ export const Page: React.FC = () => {
 										<Button className="btn-upload">导入配置</Button>
 									</Upload>
 									<Button type="primary" onClick={() => window.print()}>下载 PDF</Button>
-								</Button.Group>
+								</div>
 							</Affix>
 						</React.Fragment>
 					)}

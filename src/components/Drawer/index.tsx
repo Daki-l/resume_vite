@@ -7,8 +7,9 @@ import {
   Radio,
   Popover,
   Input,
+  Tooltip,
 } from 'antd';
-import { DeleteFilled, InfoCircleFilled, MenuOutlined } from '@ant-design/icons';
+import { DeleteFilled, InfoCircleFilled, MenuOutlined, DragOutlined } from '@ant-design/icons';
 import { FormCreator } from '../FormCreator';
 import { getDefaultTitleNameMap } from '@/data/constant';
 import { MODULES, CONTENT_OF_MODULE } from '@/helpers/contant';
@@ -17,8 +18,6 @@ import { ConfigTheme } from './ConfigTheme';
 import { Templates } from './Templates';
 import useThrottle from '@/hooks/useThrottle';
 import './index.less';
-
-const { Panel } = Collapse;
 
 type Props = {
   value: ResumeConfig;
@@ -62,6 +61,7 @@ export const Drawer: React.FC<Props> = props => {
   const [childrenDrawer, setChildrenDrawer] = useState<string | null>(null);
   const [currentContent, updateCurrentContent] = useState<any>(null);
   const [panelType, setPanelType] = useState('template');
+  const [dragMode, setDragMode] = useState(false);
   const dragIndexRef = useRef<number>(-1);
 
   const updateContent = useThrottle(
@@ -75,11 +75,23 @@ export const Drawer: React.FC<Props> = props => {
   );
 
   const swapItems = (moduleKey: string, fromIdx: number, toIdx: number) => {
-    if (fromIdx === toIdx || !props.value) return;
     const arr = [...((props.value as any)[moduleKey] || [])];
+    if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || fromIdx >= arr.length || toIdx >= arr.length) return;
+
     const [item] = arr.splice(fromIdx, 1);
     arr.splice(toIdx, 0, item);
     props.onValueChange({ [moduleKey]: arr });
+    dragIndexRef.current = -1;
+  };
+
+  const swapModules = (fromIdx: number, toIdx: number) => {
+    const order = modules.map(module => module.key);
+    if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || fromIdx >= order.length || toIdx >= order.length) return;
+
+    const [item] = order.splice(fromIdx, 1);
+    order.splice(toIdx, 0, item);
+    props.onValueChange({ moduleOrder: order });
+    dragIndexRef.current = -1;
   };
 
   const deleteItem = (moduleKey: string, idx: number) => {
@@ -89,8 +101,11 @@ export const Drawer: React.FC<Props> = props => {
   };
 
   const modules = useMemo(() => {
-    return MODULES({ titleNameMap: props.value?.titleNameMap });
-  }, [props.value?.titleNameMap]);
+    return MODULES({
+      titleNameMap: props.value?.titleNameMap,
+      moduleOrder: props.value?.moduleOrder,
+    });
+  }, [props.value?.moduleOrder, props.value?.titleNameMap]);
 
   const contentOfModule = useMemo(() => CONTENT_OF_MODULE(), []);
 
@@ -153,19 +168,25 @@ export const Drawer: React.FC<Props> = props => {
 
     return (
       <div className="module-item" key={idx}>
-        <Collapse defaultActiveKey={[]} ghost>
-          <Panel header={header} key={idx}>
-            <div className="list-value-item">
-              {list}
-              <div
-                className="btn-append"
-                onClick={() => { setChildrenDrawer(key); updateCurrentContent(null); }}
-              >
-                继续添加
+        <Collapse
+          defaultActiveKey={[]}
+          ghost
+          items={[{
+            key: `${idx}`,
+            label: header,
+            children: (
+              <div className="list-value-item">
+                {list}
+                <div
+                  className="btn-append"
+                  onClick={() => { setChildrenDrawer(key); updateCurrentContent(null); }}
+                >
+                  继续添加
+                </div>
               </div>
-            </div>
-          </Panel>
-        </Collapse>
+            ),
+          }]}
+        />
       </div>
     );
   };
@@ -177,57 +198,90 @@ export const Drawer: React.FC<Props> = props => {
         defaultActiveKey={[]}
         ghost
         expandIcon={() => <span style={{ display: 'inline-block', width: '12px' }} />}
-      >
-        <Panel
-          header={
+        items={[{
+          key: 'no-content-panel',
+          className: 'no-content-panel',
+          label: (
             <span onClick={() => { updateCurrentContent(props.value ? (props.value as any)[key] : {}); setChildrenDrawer(key); }}>
               <span className="item-icon">{icon}</span>
               <span className="item-name">{name}</span>
             </span>
-          }
-          className="no-content-panel"
-          key="no-content-panel"
-        />
-      </Collapse>
+          ),
+        }]}
+      />
+    </div>
+  );
+
+  const moduleSortContent = (
+    <div className="module-sort-list">
+      {modules.map((module, idx) => (
+        <DraggableRow
+          key={module.key}
+          index={idx}
+          onDragStart={fi => { dragIndexRef.current = fi; }}
+          onDrop={ti => swapModules(dragIndexRef.current, ti)}
+        >
+          <div className="module-sort-item">
+            <Tooltip title="拖拽排序">
+              <DragOutlined className="drag-handle" />
+            </Tooltip>
+            <span className="item-icon">{module.icon}</span>
+            <span className="item-name">{module.name}</span>
+          </div>
+        </DraggableRow>
+      ))}
     </div>
   );
 
   const moduleContent = (
     <div className="module-list">
-      {modules.map((module, idx) => {
-        if (!module.key.endsWith('List')) return renderModuleListItem(module);
-        if (!props.value) return null;
-        const values = ((props.value as any)[module.key] || []) as any[];
-        return renderModuleList(module, idx, values);
-      })}
+      <div className="module-toolbar">
+        <Button
+          size="small"
+          icon={<DragOutlined />}
+          onClick={() => setDragMode(v => !v)}
+        >
+          {dragMode ? '完成排序' : '拖拽排序'}
+        </Button>
+      </div>
 
-      <AntdDrawer
-        title={modules.find(m => m.key === childrenDrawer)?.name}
-        width={450}
-        onClose={() => setChildrenDrawer(null)}
-        open={!!childrenDrawer}
-      >
-        <FormCreator
-          config={(contentOfModule as any)[childrenDrawer!]}
-          value={currentContent}
-          isList={isList}
-          onChange={v => {
-            if (isList) {
-              const arr: any[] = [...((props.value as any)[childrenDrawer!] || [])];
-              if (currentContent) {
-                arr[currentContent.dataIndex] = { ...currentContent, ...v };
-              } else {
-                arr.push(v);
-              }
-              props.onValueChange({ [childrenDrawer!]: arr });
-              setChildrenDrawer(null);
-              updateCurrentContent(null);
-            } else {
-              updateContent(v);
-            }
-          }}
-        />
-      </AntdDrawer>
+      {dragMode ? moduleSortContent : (
+        <>
+          {modules.map((module, idx) => {
+            if (!module.key.endsWith('List')) return renderModuleListItem(module);
+            const values = ((props.value as any)[module.key] || []) as any[];
+            return renderModuleList(module, idx, values);
+          })}
+
+          <AntdDrawer
+            title={modules.find(m => m.key === childrenDrawer)?.name}
+            width={450}
+            onClose={() => setChildrenDrawer(null)}
+            open={!!childrenDrawer}
+          >
+            <FormCreator
+              config={(contentOfModule as any)[childrenDrawer!]}
+              value={currentContent}
+              isList={isList}
+              onChange={v => {
+                if (isList) {
+                  const arr: any[] = [...((props.value as any)[childrenDrawer!] || [])];
+                  if (currentContent) {
+                    arr[currentContent.dataIndex] = { ...currentContent, ...v };
+                  } else {
+                    arr.push(v);
+                  }
+                  props.onValueChange({ [childrenDrawer!]: arr });
+                  setChildrenDrawer(null);
+                  updateCurrentContent(null);
+                } else {
+                  updateContent(v);
+                }
+              }}
+            />
+          </AntdDrawer>
+        </>
+      )}
     </div>
   );
 
