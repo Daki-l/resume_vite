@@ -27,7 +27,8 @@
 	box-shadow: 0px 2px 4px 1px rgba(0, 0, 0, 0.15);
 
 	// 布局位置
-	.basic-info {
+	.basic-info,
+	.resume-module-flow {
 		padding: 18px 24px 12px 24px;
 	}
 
@@ -67,7 +68,8 @@
 		}
 	}
 
-	.basic-info .section {
+	.basic-info .section,
+	.resume-module-flow .section {
 		border-radius: 0;
 	}
 
@@ -89,7 +91,8 @@
 		}
 	}
 
-	.basic-info section .section-info {
+	.basic-info section .section-info,
+	.resume-module-flow section .section-info {
 		.info-name {
 			max-width: 198px;
 			padding-right: 4px;
@@ -97,20 +100,23 @@
 	}
 
 	// basic-info 内容样式
-	.basic-info .avatar {
+	.basic-info .avatar,
+	.resume-module-flow .avatar {
 		margin: 0 auto;
 		display: block;
 		width: 84px;
 		height: 84px;
 	}
 
-	.basic-info .name {
+	.basic-info .name,
+	.resume-module-flow .name {
 		margin: 0 0 8px 4px;
 		font-size: 24px;
 		line-height: 36px;
 	}
 
-	.basic-info .profile {
+	.basic-info .profile,
+	.resume-module-flow .profile {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
@@ -146,7 +152,8 @@
 	}
 
 	// 非通用，skill
-	.basic-info .section-skill {
+	.basic-info .section-skill,
+	.resume-module-flow .section-skill {
 		.skill-item {
 			display: flex;
 			justify-content: space-between;
@@ -171,24 +178,28 @@
 	}
 
 	// 非通用
-	.basic-info section .sub-info {
+	.basic-info section .sub-info,
+	.resume-module-flow section .sub-info {
 		color: rgba(0, 0, 0, 0.45);
 	}
 
-	.basic-info .section-award {
+	.basic-info .section-award,
+	.resume-module-flow .section-award {
 		.sub-info {
 			font-size: 14px;
 			margin-left: 8px;
 		}
 	}
 
-	.basic-info .education-item {
+	.basic-info .education-item,
+	.resume-module-flow .education-item {
 		&:not(:first-of-type) {
 			margin-top: 8px;
 		}
 	}
 
-	.basic-info .section-work {
+	.basic-info .section-work,
+	.resume-module-flow .section-work {
 		>div {
 			line-height: 24px;
 		}
@@ -200,7 +211,8 @@
 	}
 
 	// main-info 内容样式
-	.main-info section {
+	.main-info section,
+	.resume-module-flow section {
 		margin-bottom: 16px;
 
 		.section-detail {
@@ -214,7 +226,9 @@
 
 	// 非通用
 	.main-info .section-project,
-	.main-info .section-work-exp {
+	.main-info .section-work-exp,
+	.resume-module-flow .section-project,
+	.resume-module-flow .section-work-exp {
 		.section-info .ant-tag {
 			line-height: 20px;
 			height: 20px;

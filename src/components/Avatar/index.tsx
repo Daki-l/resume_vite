@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Upload, Avatar as AntdAvatar } from 'antd';
+import React from 'react';
+import { Avatar as AntdAvatar } from 'antd';
+import { normalizeAssetUrl } from '@/helpers/sanitize';
 import './index.less';
 
 export const Avatar = ({
@@ -8,13 +9,19 @@ export const Avatar = ({
   shape = 'circle',
   size = 'default',
 }) => {
+  const avatarUrl = normalizeAssetUrl(avatarSrc);
+  const wrapperClassName = [
+    'avatar',
+    className && className !== 'avatar' ? className : '',
+    !avatarUrl ? 'avatar-hidden' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className={`avatar ${!avatarSrc ? 'avatar-hidden' : ''}`}>
-      {avatarSrc ? (
-        // @ts-ignore
+    <div className={wrapperClassName}>
+      {avatarUrl ? (
         <AntdAvatar
-          className={className}
-          src={avatarSrc}
+          className="avatar-image"
+          src={avatarUrl}
           shape={shape as any}
           size={size as any}
         />

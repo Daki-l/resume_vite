@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ColorPicker } from 'antd';
+import { normalizeCssColor } from '@/helpers/sanitize';
 import type { ThemeConfig } from '../../types';
 
 type Props = ThemeConfig & {
@@ -14,7 +15,9 @@ export const ConfigTheme: React.FC<Props> = props => {
       $style.setAttribute('id', 'dynamic');
       document.head.insertBefore($style, null);
     }
-    $style.innerHTML = `:root { --primary-color: ${props.color}; --tag-color: ${props.tagColor}; }`;
+    const color = normalizeCssColor(props.color, '#2f5785');
+    const tagColor = normalizeCssColor(props.tagColor, '#8bc34a');
+    $style.textContent = `:root { --primary-color: ${color}; --tag-color: ${tagColor}; }`;
   }, [props.color, props.tagColor]);
 
   return (
